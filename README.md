@@ -46,13 +46,13 @@
       - 板块
    - 对部分创意写作稿件拥有最终决定权
    - 其他建议
-- 叶静轩（@Mr-Eating）
+- [叶静轩](https://github.com/Mr-Eating)
    - 对部分创意写作稿件拥有最终决定权
    - 其他建议
 
 #### 名誉编辑
 
-- 沈泽厚（@Mr-Drinking）
+- [沈泽厚](https://github.com/Mr-Drinking)
    - 技术框架搭建与交接
    - 对接校方交接
    - 剩余稿件交接
