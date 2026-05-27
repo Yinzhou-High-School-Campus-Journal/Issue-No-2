@@ -28,15 +28,23 @@
 
 ```
 title: "文章标题"
+
 author: "班级 作者"
+
 author_display: "作者实际署名"
+
 received_date: "yyyy-mm-dd"
+
 editor: "对应责编"
+
 editor_username: "对应责编的 GitHub 用户名"
+
 status: "文章状态"
+
 note: "额外备注" 
-```
+
 ---
+```
 
 #### status（状态）选项
 
