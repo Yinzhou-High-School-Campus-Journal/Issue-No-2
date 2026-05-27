@@ -63,4 +63,4 @@ note: "额外备注"
     - 「#### 」对应小标题，一般用于正文之内部分，如「一、」「二、」「三、」
 - 不进入 InDesign 排版的文件（如 README.md），为保持美观，汉字与西文字母、数字间应加入一个空格
 - 进入排版流程的文件则不用添加任何空格，InDesign 的排版引擎会自动添加
-- 对其他排版细则有疑问的可参考 W3C（World Wide Web Consortium，万维网联盟）的[中文排版需求](https://www.w3.org/TR/clreq/)
+- 对其他排版细则有疑问的可参考 W3C（万维网联盟，World Wide Web Consortium）的[中文排版需求](https://www.w3.org/TR/clreq/)
