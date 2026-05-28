@@ -78,7 +78,6 @@ note: "额外备注"
 - 如果你对其余 Markdown 写法有疑问
     - 可以参考 GitHub Docs 官方的 [*Basic Writing and Formatting Syntax*](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax)（《基本写作与格式语法》）。注意，请直接通过如 Chrome 的自动翻译等功能阅读英文版，而不要被「诱骗」到那个不堪入目的机翻简中版。
     - 也可以参考更（最）进阶、权威的 *GitHub Flavored Markdown Spec*（《GitHub 风格的 Markdown 规范》），这是[第三方中文版](https://gfm.docschina.org/zh-hans/)，而这是[官方英文版](https://github.github.com/gfm/#insecure-characters)
-    - 
 - 所有双层蝌蚪引号（“”）、傻瓜引号（""）应改为单层直角引号（「」），单层蝌蚪引号（‘’）应改为双层直角引号（『』）
 - 不进入 InDesign 排版的文件（如 `README.md`），为保持美观，汉字与西文字母、数字间应加入一个空格
 - 进入排版流程的文件则不用添加任何空格，InDesign 的排版引擎会自动添加
