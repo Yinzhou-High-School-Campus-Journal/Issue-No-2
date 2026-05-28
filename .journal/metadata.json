@@ -1,0 +1,31 @@
+{
+  "articleRoot": "文章/",
+  "requiredFields": [
+    "title",
+    "author",
+    "author_display",
+    "editor",
+    "editor_username",
+    "status"
+  ],
+  "dateFields": [
+    "received_date",
+    "create_date"
+  ],
+  "optionalFields": [
+    "note"
+  ],
+  "allowedStatuses": [
+    "未开始",
+    "写作中",
+    "待责编审阅",
+    "编审未通过",
+    "编辑中",
+    "待作者确认",
+    "公审中",
+    "校审中",
+    "校审未通过",
+    "已定稿",
+    "已见刊"
+  ]
+}
