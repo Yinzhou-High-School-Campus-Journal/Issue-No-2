@@ -24,9 +24,8 @@ body:
       label: 建议范围
       options:
         - 单篇稿件
-        - 板块安排
-        - 主题／板块／前言／后记
-        - 统稿
+        - 主题／板块／目录
+        - 前言／后记
         - 其他
     validations:
       required: true
