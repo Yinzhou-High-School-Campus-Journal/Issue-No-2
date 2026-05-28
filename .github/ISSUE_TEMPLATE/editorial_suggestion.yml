@@ -1,0 +1,52 @@
+name: 编辑建议
+description: 提出关于稿件、板块、统稿、主题等方面的建议
+title: "编辑建议："
+labels:
+  - 编辑建议
+body:
+  - type: markdown
+    attributes:
+      value: |
+        这个模板用于提出大方向建议。错别字、标点、单句修改请优先在 PR 中提出。
+
+  - type: input
+    id: article
+    attributes:
+      label: 涉及稿件
+      description: 请填写文章标题或文件路径。
+      placeholder: 例如：文章/创意写作（叶静轩）/白露未晞.md
+    validations:
+      required: false
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: 建议范围
+      options:
+        - 单篇稿件
+        - 板块安排
+        - 主题／板块／前言／后记
+        - 统稿
+        - 其他
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: 建议内容
+      description: 请尽量说清楚问题、理由和可能的处理方式。
+      placeholder: |
+        我认为……
+        原因是……
+        可以考虑……
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: 其他说明
+      description: 可选。
+    validations:
+      required: false
