@@ -12,7 +12,7 @@ body:
   - type: input
     id: article
     attributes:
-      label: 涉及稿件
+      label: 涉及文章
       description: 请填写文章标题或文件路径。
       placeholder: 例如：文章/创意写作（叶静轩）/白露未晞.md
     validations:
