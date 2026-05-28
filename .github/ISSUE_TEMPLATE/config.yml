@@ -1,0 +1,4 @@
+blank_issues_enabled: true
+  - name: 校刊仓库说明
+    url: https://github.com/Yinzhou-High-School-Campus-Journal/Issue-No-2
+    about: 阅读仓库 README、RIGHTS 与 CONTRIBUTING 后再提交议题。
