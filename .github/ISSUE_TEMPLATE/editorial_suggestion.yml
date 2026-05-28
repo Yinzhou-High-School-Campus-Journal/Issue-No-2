@@ -9,15 +9,6 @@ body:
       value: |
         这个模板用于提出大方向建议。错别字、标点、单句修改请优先在 PR 中提出。
 
-  - type: input
-    id: article
-    attributes:
-      label: 涉及文章
-      description: 请填写文章标题或文件路径。
-      placeholder: 例如：文章/创意写作（叶静轩）/白露未晞.md
-    validations:
-      required: false
-
   - type: dropdown
     id: scope
     attributes:
@@ -29,6 +20,15 @@ body:
         - 其他
     validations:
       required: true
+
+  - type: input
+    id: article
+    attributes:
+      label: 涉及文章
+      description: 请填写文章标题或文件路径。
+      placeholder: 例如：文章/创意写作（叶静轩）/白露未晞.md
+    validations:
+      required: false
 
   - type: textarea
     id: suggestion
