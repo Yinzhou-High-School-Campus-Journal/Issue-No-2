@@ -12,7 +12,7 @@ body:
   - type: dropdown
     id: scope
     attributes:
-      label: 建议范围
+      label: 意见范围
       options:
         - 单篇稿件
         - 主题／板块／目录
