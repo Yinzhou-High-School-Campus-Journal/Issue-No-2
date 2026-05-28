@@ -9,13 +9,26 @@ body:
       value: |
         这里只记录必要摘要，不应放置多余内容。
 
-  - type: input
-    id: related
+  - type: dropdown
+    id: scope
     attributes:
-      label: 涉及内容
-      placeholder: 例如：白露未晞／封面／前言／整体排版
+      label: 建议范围
+      options:
+        - 单篇稿件
+        - 主题／板块／目录
+        - 前言／后记
+        - 其他
     validations:
       required: true
+
+  - type: input
+    id: article
+    attributes:
+      label: 涉及文章
+      description: 请填写文章标题或文件路径。
+      placeholder: 例如：文章/创意写作（叶静轩）/白露未晞.md
+    validations:
+      required: false
 
   - type: dropdown
     id: severity
