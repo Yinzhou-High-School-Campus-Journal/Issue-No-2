@@ -1,0 +1,45 @@
+name: 校方审核反馈
+description: 记录校方对稿件或成品的审核意见
+title: "校方反馈："
+labels:
+  - 校方反馈
+body:
+  - type: markdown
+    attributes:
+      value: |
+        这里只记录必要摘要，不应放置多余内容。
+
+  - type: input
+    id: related
+    attributes:
+      label: 涉及内容
+      placeholder: 例如：白露未晞／封面／前言／整体排版
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: 处理程度
+      options:
+        - 必须修改
+        - 建议修改
+        - 仅记录
+    validations:
+      required: true
+
+  - type: textarea
+    id: feedback
+    attributes:
+      label: 反馈摘要
+      placeholder: 请概括校方反馈，不要粘贴敏感原文。
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed_action
+    attributes:
+      label: 拟处理方式
+      placeholder: 例如：由责任编辑联系作者确认后修改。
+    validations:
+      required: false
