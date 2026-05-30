@@ -1,4 +1,4 @@
-name: auto-approve
+name: auto-approve-and-merge
 
 on:
   pull_request_target:
@@ -11,10 +11,11 @@ on:
 permissions:
   contents: read
   pull-requests: read
+  checks: read
 
 jobs:
-  approve:
-    name: 自动批准
+  approve-and-merge:
+    name: 自动批准并合并
     runs-on: ubuntu-latest
 
     if: ${{ github.event.pull_request.draft == false }}
@@ -30,7 +31,7 @@ jobs:
         with:
           node-version: "24"
 
-      - name: Auto approve if allowed
+      - name: Auto approve and merge if allowed
         run: node scripts/auto_approve.js
         env:
           BOT_TOKEN: ${{ secrets.JOURNAL_BOT_TOKEN }}
