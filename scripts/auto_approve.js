@@ -1,9 +1,23 @@
 const fs = require("fs");
+const {
+  loadConfig,
+  normalizeLogin,
+  parseFrontmatter,
+  validateMetadata,
+  isArticleMarkdown,
+  isTechnicalUser
+} = require("./journal_rules");
 
+const config = loadConfig();
 const token = process.env.BOT_TOKEN;
 const repository = process.env.GITHUB_REPOSITORY;
-const event = JSON.parse(fs.readFileSync(process.env.GITHUB_EVENT_PATH, "utf8"));
-const config = JSON.parse(fs.readFileSync(".journal/metadata.json", "utf8"));
+const eventPath = process.env.GITHUB_EVENT_PATH;
+
+if (!eventPath) {
+  throw new Error("Missing GITHUB_EVENT_PATH.");
+}
+
+const event = JSON.parse(fs.readFileSync(eventPath, "utf8"));
 
 if (!event.pull_request) {
   console.log("Not a pull request event. Skip.");
@@ -11,167 +25,39 @@ if (!event.pull_request) {
 }
 
 if (!token) {
-  console.log("Missing JOURNAL_BOT_TOKEN. Skip auto-approval.");
-  process.exit(0);
+  throw new Error("Missing JOURNAL_BOT_TOKEN. Auto approval and merge cannot run.");
+}
+
+if (!repository) {
+  throw new Error("Missing GITHUB_REPOSITORY.");
 }
 
 const pr = event.pull_request;
 const actor = normalizeLogin(event.sender.login);
 const [baseOwner, baseRepo] = repository.split("/");
 
-function normalizeLogin(value) {
-  return String(value || "").trim().replace(/^@/, "").toLowerCase();
-}
-
 function encodePath(path) {
   return path.split("/").map(encodeURIComponent).join("/");
 }
 
-function parseFrontmatter(text, filename) {
-  const normalized = text.replace(/\r\n/g, "\n");
-
-  if (!normalized.startsWith("---\n")) {
-    throw new Error(`${filename}: 缺少 YAML 元数据块，文件必须以 --- 开头`);
-  }
-
-  const end = normalized.indexOf("\n---", 4);
-
-  if (end === -1) {
-    throw new Error(`${filename}: 元数据块缺少结束的 ---`);
-  }
-
-  const raw = normalized.slice(4, end).trim();
-  const data = {};
-
-  for (const line of raw.split("\n")) {
-    const trimmed = line.trim();
-
-    if (!trimmed || trimmed.startsWith("#")) {
-      continue;
-    }
-
-    const match = trimmed.match(/^([A-Za-z0-9_]+):\s*(.*)$/);
-
-    if (!match) {
-      throw new Error(`${filename}: 元数据行格式错误：${line}`);
-    }
-
-    const key = match[1];
-    let value = match[2].trim();
-
-    value = value.replace(/^["']/, "").replace(/["']$/, "");
-
-    if (Object.prototype.hasOwnProperty.call(data, key)) {
-      throw new Error(`${filename}: 元数据字段重复：${key}`);
-    }
-
-    data[key] = value;
-  }
-
-  return data;
-}
-
-function checkDate(value, filename, field) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    throw new Error(`${filename}: ${field} 必须使用 yyyy-mm-dd 格式`);
-  }
-
-  const date = new Date(`${value}T00:00:00Z`);
-
-  if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value) {
-    throw new Error(`${filename}: ${field} 不是有效日期：${value}`);
-  }
-}
-
-function allowedEditorsForFile(filename) {
-  return config.editorRules.filter(rule =>
-    rule.paths.some(prefix => filename.startsWith(prefix))
-  );
-}
-
-function validateMetadata(filename, data) {
-  const allowedFields = new Set([
-    ...config.requiredFields,
-    ...config.dateFields,
-    ...config.optionalFields
-  ]);
-
-  for (const field of Object.keys(data)) {
-    if (!allowedFields.has(field)) {
-      throw new Error(`${filename}: 不允许的元数据字段：${field}`);
-    }
-  }
-
-  for (const field of config.requiredFields) {
-    if (!data[field] || String(data[field]).trim() === "") {
-      throw new Error(`${filename}: 缺少必填字段：${field}`);
-    }
-  }
-
-  const presentDateFields = config.dateFields.filter(field => data[field]);
-
-  if (presentDateFields.length !== 1) {
-    throw new Error(`${filename}: received_date 与 create_date 必须且只能填写其中一个`);
-  }
-
-  for (const field of presentDateFields) {
-    checkDate(data[field], filename, field);
-  }
-
-  if (!config.allowedStatuses.includes(data.status)) {
-    throw new Error(
-      `${filename}: status 不合法：${data.status}；允许值：${config.allowedStatuses.join("、")}`
-    );
-  }
-
-  if (String(data.editor_username).startsWith("@")) {
-    throw new Error(`${filename}: editor_username 不要带 @，只写 GitHub 用户名`);
-  }
-
-  if (/\s/.test(String(data.editor_username))) {
-    throw new Error(`${filename}: editor_username 不能包含空格`);
-  }
-
-  const allowedEditors = allowedEditorsForFile(filename);
-
-  if (allowedEditors.length === 0) {
-    throw new Error(`${filename}: 文件不在任何已登记的责编目录下`);
-  }
-
-  const matched = allowedEditors.some(rule =>
-    data.editor === rule.name &&
-    normalizeLogin(data.editor_username) === normalizeLogin(rule.login)
-  );
-
-  if (!matched) {
-    const expected = allowedEditors
-      .map(rule => `${rule.name} / ${rule.login}`)
-      .join(" 或 ");
-
-    throw new Error(
-      `${filename}: editor/editor_username 与所在目录不一致；允许：${expected}；实际：${data.editor} / ${data.editor_username}`
-    );
-  }
-}
-
-function isArticleMarkdown(filename) {
-  return filename.startsWith(config.articleRoot) && filename.endsWith(".md");
-}
-
-function isTechnicalUser(login) {
-  return config.technicalUsers
-    .map(normalizeLogin)
-    .includes(normalizeLogin(login));
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function api(path, options = {}) {
+  const headers = {
+    "Accept": "application/vnd.github+json",
+    "Authorization": `Bearer ${token}`,
+    "X-GitHub-Api-Version": "2022-11-28"
+  };
+
+  if (options.body) {
+    headers["Content-Type"] = "application/json";
+  }
+
   const response = await fetch(`https://api.github.com${path}`, {
     method: options.method || "GET",
-    headers: {
-      "Accept": "application/vnd.github+json",
-      "Authorization": `Bearer ${token}`,
-      "X-GitHub-Api-Version": "2022-11-28"
-    },
+    headers,
     body: options.body ? JSON.stringify(options.body) : undefined
   });
 
@@ -212,7 +98,7 @@ async function getContentFromRepo(fullName, filename, ref) {
     throw new Error(`${filename}: 不是普通文件`);
   }
 
-  return Buffer.from(data.content, "base64").toString("utf8");
+  return Buffer.from(String(data.content).replace(/\n/g, ""), "base64").toString("utf8");
 }
 
 async function getHeadContent(filename) {
@@ -228,9 +114,11 @@ async function approve() {
     method: "POST",
     body: {
       event: "APPROVE",
-      body: "🤖 已根据稿件负责人规则自动批准。"
+      body: "已根据稿件负责人规则自动批准。"
     }
   });
+
+  console.log("Approved by bot.");
 }
 
 async function canApproveAddedFile(file) {
@@ -238,11 +126,11 @@ async function canApproveAddedFile(file) {
   const headText = await getHeadContent(filename);
   const headMeta = parseFrontmatter(headText, filename);
 
-  validateMetadata(filename, headMeta);
+  validateMetadata(config, filename, headMeta);
 
   const headEditor = normalizeLogin(headMeta.editor_username);
 
-  if (isTechnicalUser(actor)) {
+  if (isTechnicalUser(config, actor)) {
     return true;
   }
 
@@ -257,8 +145,8 @@ async function canApproveModifiedFile(file) {
   const baseMeta = parseFrontmatter(baseText, filename);
   const headMeta = parseFrontmatter(headText, filename);
 
-  validateMetadata(filename, baseMeta);
-  validateMetadata(filename, headMeta);
+  validateMetadata(config, filename, baseMeta);
+  validateMetadata(config, filename, headMeta);
 
   const baseEditorUsername = normalizeLogin(baseMeta.editor_username);
   const headEditorUsername = normalizeLogin(headMeta.editor_username);
@@ -283,25 +171,20 @@ async function canApproveModifiedFile(file) {
   return true;
 }
 
-async function main() {
-  if (actor === normalizeLogin(config.botLogin)) {
-    console.log("Actor is bot itself. Skip.");
-    return;
-  }
-
+async function verifyChangedFiles() {
   const files = await listChangedFiles();
 
   if (files.length === 0) {
     console.log("No changed files. Skip.");
-    return;
+    return false;
   }
 
   for (const file of files) {
     const filename = file.filename;
 
-    if (!isArticleMarkdown(filename)) {
+    if (!isArticleMarkdown(config, filename)) {
       console.log(`Skip: non-article file changed: ${filename}.`);
-      return;
+      return false;
     }
 
     if (file.status === "added") {
@@ -309,7 +192,7 @@ async function main() {
 
       if (!ok) {
         console.log(`Skip: added file not allowed for actor ${actor}: ${filename}.`);
-        return;
+        return false;
       }
 
       continue;
@@ -319,22 +202,154 @@ async function main() {
       const ok = await canApproveModifiedFile(file);
 
       if (!ok) {
-        return;
+        return false;
       }
 
       continue;
     }
 
     console.log(`Skip: unsupported file status ${file.status} for ${filename}.`);
+    return false;
+  }
+
+  return true;
+}
+
+function latestCheckRunByName(checkRuns, name) {
+  const runs = checkRuns
+    .filter(run => run.name === name)
+    .sort((a, b) => {
+      const aTime = new Date(a.started_at || a.created_at || 0).getTime();
+      const bTime = new Date(b.started_at || b.created_at || 0).getTime();
+      return bTime - aTime;
+    });
+
+  return runs[0] || null;
+}
+
+async function waitForRequiredChecks() {
+  const requiredChecks = config.requiredChecksBeforeMerge || [];
+
+  if (requiredChecks.length === 0) {
+    console.log("No required checks configured before merge.");
+    return;
+  }
+
+  const timeoutSeconds = Number(config.requiredCheckTimeoutSeconds || 180);
+  const pollSeconds = Number(config.requiredCheckPollSeconds || 5);
+  const deadline = Date.now() + timeoutSeconds * 1000;
+
+  while (Date.now() < deadline) {
+    const data = await api(
+      `/repos/${baseOwner}/${baseRepo}/commits/${pr.head.sha}/check-runs?per_page=100`
+    );
+
+    const checkRuns = data.check_runs || [];
+    const pending = [];
+
+    for (const name of requiredChecks) {
+      const run = latestCheckRunByName(checkRuns, name);
+
+      if (!run) {
+        pending.push(`${name}: not found`);
+        continue;
+      }
+
+      if (run.status !== "completed") {
+        pending.push(`${name}: ${run.status}`);
+        continue;
+      }
+
+      if (run.conclusion !== "success") {
+        throw new Error(`${name} failed with conclusion: ${run.conclusion}`);
+      }
+    }
+
+    if (pending.length === 0) {
+      console.log(`Required checks passed: ${requiredChecks.join(", ")}`);
+      return;
+    }
+
+    console.log(`Waiting for required checks: ${pending.join("; ")}`);
+    await sleep(pollSeconds * 1000);
+  }
+
+  throw new Error(`Timed out waiting for required checks: ${requiredChecks.join(", ")}`);
+}
+
+async function mergePullRequest() {
+  const current = await api(`/repos/${baseOwner}/${baseRepo}/pulls/${pr.number}`);
+
+  if (current.state !== "open") {
+    console.log(`PR is ${current.state}. Skip merge.`);
+    return;
+  }
+
+  if (current.draft) {
+    console.log("PR is draft. Skip merge.");
+    return;
+  }
+
+  if (current.head.sha !== pr.head.sha) {
+    throw new Error(
+      `PR head changed from ${pr.head.sha} to ${current.head.sha}. Wait for the new workflow run.`
+    );
+  }
+
+  const mergeMethod = config.mergeMethod || "squash";
+
+  const result = await api(`/repos/${baseOwner}/${baseRepo}/pulls/${pr.number}/merge`, {
+    method: "PUT",
+    body: {
+      sha: pr.head.sha,
+      merge_method: mergeMethod,
+      commit_title: `${pr.title} (#${pr.number})`,
+      commit_message: "Automatically merged after journal ownership and metadata checks."
+    }
+  });
+
+  if (!result.merged) {
+    throw new Error(`Merge API did not merge PR: ${result.message || "unknown reason"}`);
+  }
+
+  console.log(`Merged PR #${pr.number}: ${result.sha}`);
+}
+
+async function main() {
+  if (pr.draft) {
+    console.log("Draft PR. Skip.");
+    return;
+  }
+
+  if (pr.state !== "open") {
+    console.log(`PR is ${pr.state}. Skip.`);
+    return;
+  }
+
+  if (actor === normalizeLogin(config.botLogin)) {
+    console.log("Actor is bot itself. Skip.");
+    return;
+  }
+
+  if (normalizeLogin(pr.user.login) === normalizeLogin(config.botLogin)) {
+    console.log("PR author is bot itself. Skip.");
+    return;
+  }
+
+  const allowed = await verifyChangedFiles();
+
+  if (!allowed) {
+    console.log("PR is not eligible for automatic approval and merge.");
     return;
   }
 
   await approve();
-  console.log("Approved by bot.");
+  await waitForRequiredChecks();
+  await mergePullRequest();
 }
 
 main().catch(error => {
-  console.log("Auto-approval skipped because of an error:");
+  console.log("Auto approval and merge failed:");
   console.log(error.message || error);
-  process.exit(0);
+  process.exit(1);
 });
