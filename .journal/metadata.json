@@ -15,6 +15,9 @@
   "optionalFields": [
     "note"
   ],
+  "createDateRoots": [
+    "文章/正文之外（张哲源、李洛霄）/"
+  ],
   "allowedStatuses": [
     "未开始",
     "写作中",
@@ -32,18 +35,18 @@
   "technicalUsers": [
     "Mr-Drinking"
   ],
+  "requiredChecksBeforeMerge": [
+    "检查元数据"
+  ],
+  "requiredCheckTimeoutSeconds": 180,
+  "requiredCheckPollSeconds": 5,
+  "mergeMethod": "squash",
   "editorRules": [
-    {
-      "name": "叶静轩",
-      "login": "Mr-Eating",
-      "paths": [
-        "文章/创意写作（叶静轩）/"
-      ]
-    },
     {
       "name": "张哲源",
       "login": "SaviorZhang211",
       "paths": [
+        "文章/人文社科（张哲源）/",
         "文章/正文之外（张哲源、李洛霄）/"
       ]
     },
@@ -51,7 +54,15 @@
       "name": "李洛霄",
       "login": "LiLuoxiao",
       "paths": [
+        "文章/创意写作（李洛霄）/",
         "文章/正文之外（张哲源、李洛霄）/"
+      ]
+    },
+    {
+      "name": "叶静轩",
+      "login": "Mr-Eating",
+      "paths": [
+        "文章/创意写作（叶静轩）/"
       ]
     }
   ]
