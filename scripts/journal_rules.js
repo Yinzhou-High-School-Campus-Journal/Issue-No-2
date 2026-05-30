@@ -98,3 +98,98 @@ function allowedEditorsForFile(config, filename) {
 
 function validateMetadata(config, filename, data) {
   const allowedFields = new Set([
+    ...config.requiredFields,
+    ...config.dateFields,
+    ...config.optionalFields
+  ]);
+
+  for (const field of Object.keys(data)) {
+    if (!allowedFields.has(field)) {
+      throw new Error(`${filename}: 不允许的元数据字段：${field}`);
+    }
+  }
+
+  for (const field of config.requiredFields) {
+    if (!data[field] || String(data[field]).trim() === "") {
+      throw new Error(`${filename}: 缺少必填字段：${field}`);
+    }
+  }
+
+  const presentDateFields = config.dateFields.filter(field => data[field]);
+
+  if (presentDateFields.length !== 1) {
+    throw new Error(`${filename}: received_date 与 create_date 必须且只能填写其中一个`);
+  }
+
+  for (const field of presentDateFields) {
+    checkDate(data[field], filename, field);
+  }
+
+  const createDateRequired = (config.createDateRoots || [])
+    .some(prefix => filename.startsWith(prefix));
+
+  if (createDateRequired && !data.create_date) {
+    throw new Error(`${filename}: 该目录下的文件必须使用 create_date，而不是 received_date`);
+  }
+
+  if (!config.allowedStatuses.includes(data.status)) {
+    throw new Error(
+      `${filename}: status 不合法：${data.status}；允许值：${config.allowedStatuses.join("、")}`
+    );
+  }
+
+  if (String(data.editor_username).startsWith("@")) {
+    throw new Error(`${filename}: editor_username 不要带 @，只写 GitHub 用户名`);
+  }
+
+  if (/\s/.test(String(data.editor_username))) {
+    throw new Error(`${filename}: editor_username 不能包含空格`);
+  }
+
+  const allowedEditors = allowedEditorsForFile(config, filename);
+
+  if (allowedEditors.length === 0) {
+    throw new Error(`${filename}: 文件不在任何已登记的责编目录下`);
+  }
+
+  const matched = allowedEditors.some(rule =>
+    data.editor === rule.name &&
+    normalizeLogin(data.editor_username) === normalizeLogin(rule.login)
+  );
+
+  if (!matched) {
+    const expected = allowedEditors
+      .map(rule => `${rule.name} / ${rule.login}`)
+      .join(" 或 ");
+
+    throw new Error(
+      `${filename}: editor/editor_username 与所在目录不一致；允许：${expected}；实际：${data.editor} / ${data.editor_username}`
+    );
+  }
+}
+
+function listArticleFiles(config) {
+  return walk(config.articleRoot)
+    .filter(file => file.endsWith(".md"))
+    .map(toRepoPath);
+}
+
+function isArticleMarkdown(config, filename) {
+  return filename.startsWith(config.articleRoot) && filename.endsWith(".md");
+}
+
+function isTechnicalUser(config, login) {
+  return config.technicalUsers
+    .map(normalizeLogin)
+    .includes(normalizeLogin(login));
+}
+
+module.exports = {
+  loadConfig,
+  normalizeLogin,
+  parseFrontmatter,
+  validateMetadata,
+  listArticleFiles,
+  isArticleMarkdown,
+  isTechnicalUser
+};
