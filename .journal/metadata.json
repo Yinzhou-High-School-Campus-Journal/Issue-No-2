@@ -27,5 +27,32 @@
     "校审未通过",
     "已定稿",
     "已见刊"
+  ],
+  "botLogin": "yhscj-bot",
+  "technicalUsers": [
+    "Mr-Drinking"
+  ],
+  "editorRules": [
+    {
+      "name": "叶静轩",
+      "login": "Mr-Eating",
+      "paths": [
+        "文章/创意写作（叶静轩）/"
+      ]
+    },
+    {
+      "name": "张哲源",
+      "login": "SaviorZhang211",
+      "paths": [
+        "文章/正文之外（张哲源、李洛霄）/"
+      ]
+    },
+    {
+      "name": "李洛霄",
+      "login": "LiLuoxiao",
+      "paths": [
+        "文章/正文之外（张哲源、李洛霄）/"
+      ]
+    }
   ]
 }
