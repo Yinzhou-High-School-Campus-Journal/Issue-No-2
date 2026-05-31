@@ -113,8 +113,7 @@ async function approve() {
   await api(`/repos/${baseOwner}/${baseRepo}/pulls/${pr.number}/reviews`, {
     method: "POST",
     body: {
-      event: "APPROVE",
-      body: "已根据稿件负责人规则自动批准。"
+      event: "APPROVE"
     }
   });
 
@@ -277,16 +276,42 @@ async function waitForRequiredChecks() {
   throw new Error(`Timed out waiting for required checks: ${requiredChecks.join(", ")}`);
 }
 
-async function mergePullRequest() {
+async function graphql(query, variables = {}) {
+  const response = await fetch("https://api.github.com/graphql", {
+    method: "POST",
+    headers: {
+      "Accept": "application/vnd.github+json",
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ query, variables })
+  });
+
+  const text = await response.text();
+
+  if (!response.ok) {
+    throw new Error(`${response.status} ${response.statusText}: ${text}`);
+  }
+
+  const data = text ? JSON.parse(text) : null;
+
+  if (data.errors && data.errors.length > 0) {
+    throw new Error(data.errors.map(error => error.message).join("; "));
+  }
+
+  return data.data;
+}
+
+async function enableAutoMerge() {
   const current = await api(`/repos/${baseOwner}/${baseRepo}/pulls/${pr.number}`);
 
   if (current.state !== "open") {
-    console.log(`PR is ${current.state}. Skip merge.`);
+    console.log(`PR is ${current.state}. Skip auto-merge.`);
     return;
   }
 
   if (current.draft) {
-    console.log("PR is draft. Skip merge.");
+    console.log("PR is draft. Skip auto-merge.");
     return;
   }
 
@@ -296,22 +321,40 @@ async function mergePullRequest() {
     );
   }
 
-  const mergeMethod = config.mergeMethod || "squash";
-  const result = await api(`/repos/${baseOwner}/${baseRepo}/pulls/${pr.number}/merge`, {
-    method: "PUT",
-    body: {
-      sha: pr.head.sha,
-      merge_method: mergeMethod,
-      commit_title: `${pr.title} (#${pr.number})`,
-      commit_message: "Automatically merged after journal ownership and metadata checks."
-    }
-  });
-
-  if (!result.merged) {
-    throw new Error(`Merge API did not merge PR: ${result.message || "unknown reason"}`);
+  if (current.auto_merge) {
+    console.log(`Auto-merge is already enabled for PR #${pr.number}.`);
+    return;
   }
 
-  console.log(`Merged PR #${pr.number}: ${result.sha}`);
+  const mergeMethod = String(config.mergeMethod || "squash").toUpperCase();
+
+  await graphql(
+    `mutation EnableAutoMerge(
+      $pullRequestId: ID!,
+      $mergeMethod: PullRequestMergeMethod!,
+      $commitHeadline: String!,
+      $commitBody: String!
+    ) {
+      enablePullRequestAutoMerge(input: {
+        pullRequestId: $pullRequestId,
+        mergeMethod: $mergeMethod,
+        commitHeadline: $commitHeadline,
+        commitBody: $commitBody
+      }) {
+        pullRequest {
+          number
+        }
+      }
+    }`,
+    {
+      pullRequestId: current.node_id,
+      mergeMethod,
+      commitHeadline: `${pr.title} (#${pr.number})`,
+      commitBody: ""
+    }
+  );
+
+  console.log(`Enabled auto-merge for PR #${pr.number}.`);
 }
 
 async function main() {
@@ -344,7 +387,7 @@ async function main() {
 
   await approve();
   await waitForRequiredChecks();
-  await mergePullRequest();
+  await enableAutoMerge();
 }
 
 main().catch(error => {
