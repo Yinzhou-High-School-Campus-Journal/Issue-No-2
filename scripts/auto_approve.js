@@ -386,6 +386,7 @@ async function main() {
   }
 
   await approve();
+  await waitForRequiredChecks();
   await enableAutoMerge();
 }
 
