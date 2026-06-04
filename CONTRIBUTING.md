@@ -4,14 +4,14 @@
 
 ### 稿件工作流程
 
-- 技术员接收投稿；
-- 技术员将稿件 Markdown 化、写上元数据并 Commit（贡献）到对应责编的文件夹；
-- 责编粗修标点与错别字；
-- 责编可选进行下一步的修改工作（如添加注释）；
-- 责编与作者联系确认（建议使用腾讯文档或 QQ）；
-- 责编提交且符合负责人规则的 Pull Request（拉取请求，PR）会被[机器人](https://github.com/YzCJ-Bot)自动批准，并在元数据检查通过后自动合并；
-- 稿件进入公审阶段，所有编辑可用 Issues（议题）提出大方向建议，PR 提出具体建议；
-- 责编评论审核并与作者再次确认后合并进 `main` 分支。
+1. 技术员接收投稿；
+2. 技术员将稿件 Markdown 化、写上元数据并 Commit（贡献）到对应责编的文件夹；
+3. 责编粗修标点与错别字；
+4. 责编可选进行下一步的修改工作（如添加注释）；
+5. 责编与作者联系确认（建议使用腾讯文档或 QQ）；
+6. 责编提交且符合负责人规则的 Pull Request（拉取请求，PR）会被[机器人](https://github.com/YzCJ-Bot)自动批准，并在元数据检查通过后自动合并；
+7。 稿件进入公审阶段，所有编辑可用 Issues（议题）提出大方向建议，PR 提出具体建议；
+8. 责编评论审核并与作者再次确认后合并进 `main` 分支。
 
 ### 目前稿件目录 
 
@@ -75,10 +75,14 @@ note: "额外备注"
     - 「## 」对应副标题，较少见
     - 「### 」对应中标题，一般用于正文以外部分，如后记、注释等
     - 「#### 」对应小标题，一般用于正文之内部分，如「一、」「二、」「三、」
+- 关于链接
+    - 不进入排版流程的文件（如 `README.md`，下同），应使用`[网站](链接)`的写法
+    - 进入排版流程的文件（如正常稿件，下同），应使用`网站（链接）`的写法
 - 如果你对其余 Markdown 写法有疑问
     - 可以参考 GitHub Docs 官方的 [*Basic Writing and Formatting Syntax*](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax)（《基本写作与格式语法》）。注意，请直接通过如 Chrome 的自动翻译等功能阅读英文版，而不要被「诱骗」到那个不堪入目的机翻简中版
     - 也可以参考更（最）进阶、权威的 *GitHub Flavored Markdown Spec*（《GitHub 风格的 Markdown 规范》），这是[第三方中文版](https://gfm.docschina.org/zh-hans/)，而这是[官方英文版](https://github.github.com/gfm/#insecure-characters)
 - 所有双层蝌蚪引号（“”）、傻瓜引号（""）应改为单层直角引号（「」），单层蝌蚪引号（‘’）应改为双层直角引号（『』）
-- 不进入 InDesign 排版的文件（如 `README.md`），为保持美观，汉字与西文字母、数字间应加入一个空格
-- 进入排版流程的文件则不用添加任何空格，InDesign 的排版引擎会自动添加
+- 关于汉字与西文字母、数字间的空格
+    - 不进入排版流程的文件，为保持美观，应加入一个空格
+    - 进入排版流程的文件则不用添加任何空格，InDesign 的排版引擎会自动添加
 - 对其他排版细则有疑问的可参考 W3C（万维网联盟，World Wide Web Consortium）的[中文排版需求](https://www.w3.org/TR/clreq/)
