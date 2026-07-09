@@ -57,6 +57,13 @@ assert.deepStrictEqual(
 
 assertValid("文章/人文社科（张哲源）/测试.md", metadata());
 assertValid(
+  "文章/其他/测试.md",
+  metadata({
+    editor: "叶静轩",
+    editor_username: "Mr-Eating"
+  })
+);
+assertValid(
   "文章/正文之外（张哲源、李洛霄）/非见刊类/本期征稿说明.md",
   metadata({
     author: "《鄞年・思叙》编辑部",
@@ -103,6 +110,15 @@ assertInvalid(
   metadata({
     editor: "张哲源",
     editor_username: "SaviorZhang211"
+  }),
+  /editor\/editor_username 与所在目录不一致/
+);
+
+assertInvalid(
+  "文章/其他/测试.md",
+  metadata({
+    editor: "未登记责编",
+    editor_username: "UnknownEditor"
   }),
   /editor\/editor_username 与所在目录不一致/
 );
