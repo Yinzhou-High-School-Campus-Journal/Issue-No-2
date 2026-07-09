@@ -276,42 +276,16 @@ async function waitForRequiredChecks() {
   throw new Error(`Timed out waiting for required checks: ${requiredChecks.join(", ")}`);
 }
 
-async function graphql(query, variables = {}) {
-  const response = await fetch("https://api.github.com/graphql", {
-    method: "POST",
-    headers: {
-      "Accept": "application/vnd.github+json",
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ query, variables })
-  });
-
-  const text = await response.text();
-
-  if (!response.ok) {
-    throw new Error(`${response.status} ${response.statusText}: ${text}`);
-  }
-
-  const data = text ? JSON.parse(text) : null;
-
-  if (data.errors && data.errors.length > 0) {
-    throw new Error(data.errors.map(error => error.message).join("; "));
-  }
-
-  return data.data;
-}
-
-async function enableAutoMerge() {
+async function mergePullRequest() {
   const current = await api(`/repos/${baseOwner}/${baseRepo}/pulls/${pr.number}`);
 
   if (current.state !== "open") {
-    console.log(`PR is ${current.state}. Skip auto-merge.`);
+    console.log(`PR is ${current.state}. Skip merge.`);
     return;
   }
 
   if (current.draft) {
-    console.log("PR is draft. Skip auto-merge.");
+    console.log("PR is draft. Skip merge.");
     return;
   }
 
@@ -321,40 +295,18 @@ async function enableAutoMerge() {
     );
   }
 
-  if (current.auto_merge) {
-    console.log(`Auto-merge is already enabled for PR #${pr.number}.`);
-    return;
-  }
+  const mergeMethod = String(config.mergeMethod || "squash").toLowerCase();
 
-  const mergeMethod = String(config.mergeMethod || "squash").toUpperCase();
-
-  await graphql(
-    `mutation EnableAutoMerge(
-      $pullRequestId: ID!,
-      $mergeMethod: PullRequestMergeMethod!,
-      $commitHeadline: String!,
-      $commitBody: String!
-    ) {
-      enablePullRequestAutoMerge(input: {
-        pullRequestId: $pullRequestId,
-        mergeMethod: $mergeMethod,
-        commitHeadline: $commitHeadline,
-        commitBody: $commitBody
-      }) {
-        pullRequest {
-          number
-        }
-      }
-    }`,
-    {
-      pullRequestId: current.node_id,
-      mergeMethod,
-      commitHeadline: `${pr.title} (#${pr.number})`,
-      commitBody: ""
+  await api(`/repos/${baseOwner}/${baseRepo}/pulls/${pr.number}/merge`, {
+    method: "PUT",
+    body: {
+      commit_title: `${pr.title} (#${pr.number})`,
+      commit_message: "",
+      merge_method: mergeMethod
     }
-  );
+  });
 
-  console.log(`Enabled auto-merge for PR #${pr.number}.`);
+  console.log(`Merged PR #${pr.number} with ${mergeMethod}.`);
 }
 
 async function main() {
@@ -387,7 +339,7 @@ async function main() {
 
   await approve();
   await waitForRequiredChecks();
-  await enableAutoMerge();
+  await mergePullRequest();
 }
 
 main().catch(error => {
