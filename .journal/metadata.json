@@ -33,7 +33,8 @@
   ],
   "botLogin": "YzCJ-Bot",
   "technicalUsers": [
-    "Mr-Drinking"
+    "Mr-Drinking",
+    "hsrstclass10"
   ],
   "requiredChecksBeforeMerge": [
     "检查元数据"
