@@ -47,7 +47,7 @@ note: "试卷、参考答案与转换说明"
 | 文档转换 | [Mathpix Snip](https://mathpix.com/) | 将LaTeX代码批量转换为Word可编辑格式 |
 | 图形绘制 | [GeoGebra经典版](https://www.geogebra.org/classic) | 绘制几何图、函数图和统计图表 |
 | 最终排版 | WPS文字 | 分栏、公式对齐、版式精修及最终校对 |
-| Markdown转换 | Pandoc、GeoGebra Apps API与人工校对 | 将最终Word文档转为GFM，对照PDF校正公式与编号，并把25张GeoGebra图直接导出为响应式SVG；仅无法矢量化的刺激强度结果保留JPG |
+| Markdown转换 | Pandoc、GeoGebra Apps API与人工校对 | 将最终Word文档转为GFM，对照PDF校正公式与编号，并把25张GeoGebra图直接导出为响应式SVG；第20题图2改用GFM表格还原 |
 
 ## 特别感谢
 
@@ -57,14 +57,14 @@ note: "试卷、参考答案与转换说明"
 
 Markdown版本以正式DOCX/PDF为定稿依据，并对正式答案中的下列明显笔误作了透明更正：
 
-- 第4题解析中的$\angle BAD$更正为$\angle BAC$。
-- 第6题解析中的「关于$y$轴」更正为「关于$x$轴」。
+- 第4题解析中的$`\angle BAD`$更正为$`\angle BAC`$。
+- 第6题解析中的「关于$`y`$轴」更正为「关于$`x`$轴」。
 - 第20题第（1）问的单位`mV/mS`更正为`mV/ms`。
-- 第22题第（2）问将`IJ ∥= 1/2 EC`拆分为$IJ\parallel EC$与$IJ=\frac12EC$。
+- 第22题第（2）问将`IJ ∥= 1/2 EC`拆分为$`IJ\parallel EC`$与$`IJ=\frac12EC`$。
 - 第23题速查表按实际题目结构整理为（1）（i）、（1）（ii）、（2）；证明中「有四个交点」更正为「有两个交点」。
-- 第24题第（1）问将`DI ∥= JK`拆分为$DI\parallel JK$与$DI=JK$；第（3）问中未定义的$\angle AMB$更正为前文已证明的$\angle AHB$。
+- 第24题第（1）问将`DI ∥= JK`拆分为$`DI\parallel JK`$与$`DI=JK`$；第（3）问中未定义的$`\angle AMB`$更正为前文已证明的$`\angle AHB`$。
 
-历史辅助稿中的题号和数值未沿用：正式第4题为尺规作图、第5题为代数判断，第9题采用$GD=3\sqrt3$，第17题采用$x^2-16$，第24题第（3）问的结论为$\angle CGL=\angle HLD+\angle FLJ$。
+历史辅助稿中的题号和数值未沿用：正式第4题为尺规作图、第5题为代数判断，第9题采用$`GD=3\sqrt3`$，第17题采用$`x^2-16`$，第24题第（3）问的结论为$`\angle CGL=\angle HLD+\angle FLJ`$。
 
 ## 许可与署名
 
