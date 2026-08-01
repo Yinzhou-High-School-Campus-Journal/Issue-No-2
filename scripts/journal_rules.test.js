@@ -33,7 +33,7 @@ function assertInvalid(filename, data, pattern) {
 
 assert.strictEqual(normalizeLogin("@Mr-Drinking"), "mr-drinking");
 assert.strictEqual(isTechnicalUser(config, "mr-drinking"), true);
-assert.strictEqual(isTechnicalUser(config, "@HSRSTCLASS10"), true);
+assert.strictEqual(isTechnicalUser(config, "@HSRST2026"), true);
 assert.strictEqual(isArticleMarkdown(config, "文章/人文社科（张哲源）/测试.md"), true);
 assert.strictEqual(isArticleMarkdown(config, "README.md"), false);
 

@@ -62,7 +62,7 @@
 
 #### 技术人员
 
-- [王茗冉](https://github.com/hsrstclass10)
+- [王茗冉](https://github.com/hsrst2026)
    - 接收投稿
    - 将稿件 Markdown 化、填写元数据并提交到对应责编目录
    - 封面设计建议、执行
