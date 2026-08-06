@@ -18,19 +18,28 @@
   "createDateRoots": [
     "文章/正文之外（张哲源、李洛霄）/"
   ],
-  "allowedStatuses": [
-    "未开始",
-    "写作中",
-    "待责编审阅",
-    "编审未通过",
-    "编辑中",
-    "待作者确认",
-    "公审中",
-    "校审中",
-    "校审未通过",
-    "已定稿",
-    "已见刊"
-  ],
+  "statusByDateField": {
+    "create_date": [
+      "未开始",
+      "写作中",
+      "公审中",
+      "校审中",
+      "校审未通过",
+      "已定稿",
+      "已见刊"
+    ],
+    "received_date": [
+      "待责编审阅",
+      "编审未通过",
+      "编辑中",
+      "待作者确认",
+      "公审中",
+      "校审中",
+      "校审未通过",
+      "已定稿",
+      "已见刊"
+    ]
+  },
   "botLogin": "YzCJ-Bot",
   "technicalUsers": [
     "Mr-Drinking",
@@ -39,7 +48,7 @@
   "requiredChecksBeforeMerge": [
     "检查元数据"
   ],
-  "requiredCheckTimeoutSeconds": 180,
+  "requiredCheckTimeoutSeconds": 300,
   "requiredCheckPollSeconds": 5,
   "mergeMethod": "squash",
   "editorRules": [

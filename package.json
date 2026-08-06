@@ -1,0 +1,16 @@
+{
+  "name": "issue-no-2-journal-automation",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "test": "node scripts/journal_rules.test.js",
+    "check:metadata": "node scripts/check_metadata.js",
+    "auto-approve": "node scripts/auto_approve.js"
+  },
+  "dependencies": {
+    "yaml": "2.9.0"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

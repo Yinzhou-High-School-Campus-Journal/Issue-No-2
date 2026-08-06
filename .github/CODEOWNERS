@@ -1,6 +1,8 @@
 /.github/** @Mr-Drinking
 /.journal/** @Mr-Drinking
 /scripts/** @Mr-Drinking
+/package.json @Mr-Drinking
+/package-lock.json @Mr-Drinking
 
 /文章/人文社科（张哲源）/** @YzCJ-Bot @SaviorZhang211
 /文章/创意写作（李洛霄）/** @YzCJ-Bot @LiLuoxiao

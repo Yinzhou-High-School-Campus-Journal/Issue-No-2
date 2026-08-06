@@ -76,15 +76,35 @@ function listExplicitFiles() {
 }
 
 async function main() {
-  const config = loadConfig();
+  const config = loadConfig(process.env.METADATA_CONFIG_PATH || ".journal/metadata.json");
+  const explicitFiles = listExplicitFiles();
+
+  if (process.env.GITHUB_EVENT_NAME === "workflow_dispatch" && explicitFiles.length === 0) {
+    throw new Error("手动运行元数据检查时必须指定至少一个稿件文件。");
+  }
+
+  const invalidExplicitFiles = explicitFiles
+    .map(file => file.filename)
+    .filter(filename => !isArticleMarkdown(config, filename));
+
+  if (invalidExplicitFiles.length > 0) {
+    throw new Error(
+      `以下指定路径不是稿件 Markdown 文件：${invalidExplicitFiles.join("、")}`
+    );
+  }
+
   const changedFiles = [
-    ...listExplicitFiles(),
+    ...explicitFiles,
     ...await listPullRequestFiles()
   ];
-  const files = changedFiles
-    .filter(file => file.status !== "removed")
-    .map(file => file.filename)
-    .filter(filename => isArticleMarkdown(config, filename));
+  const files = [
+    ...new Set(
+      changedFiles
+        .filter(file => file.status !== "removed")
+        .map(file => file.filename)
+        .filter(filename => isArticleMarkdown(config, filename))
+    )
+  ];
   const errors = [];
 
   if (files.length === 0) {
@@ -98,7 +118,11 @@ async function main() {
       const data = parseFrontmatter(text, file);
       validateMetadata(config, file, data);
     } catch (error) {
-      errors.push(error.message);
+      if (Array.isArray(error.errors)) {
+        errors.push(...error.errors);
+      } else {
+        errors.push(error.message || String(error));
+      }
     }
   }
 

@@ -8,6 +8,11 @@ on:
       - synchronize
       - ready_for_review
   workflow_dispatch:
+    inputs:
+      files:
+        description: "要检查的稿件路径；多个路径用英文逗号分隔"
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -26,13 +31,18 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Test journal rules
-        run: node scripts/journal_rules.test.js
+        run: npm test
 
       - name: Check metadata
-        run: node scripts/check_metadata.js
+        run: npm run check:metadata
         env:
+          CHECK_METADATA_FILES: ${{ inputs.files || '' }}
           GITHUB_TOKEN: ${{ github.token }}
           GITHUB_EVENT_PATH: ${{ github.event_path }}
           GITHUB_REPOSITORY: ${{ github.repository }}
