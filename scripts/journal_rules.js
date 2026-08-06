@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const YAML = require("yaml");
 
 function loadConfig(configPath = ".journal/metadata.json") {
   return JSON.parse(fs.readFileSync(configPath, "utf8"));
@@ -35,44 +36,54 @@ function toRepoPath(filePath) {
 }
 
 function parseFrontmatter(text, filename) {
-  const normalized = text.replace(/\r\n/g, "\n");
+  const normalized = String(text)
+    .replace(/^\uFEFF/, "")
+    .replace(/\r\n?/g, "\n");
+  const lines = normalized.split("\n");
 
-  if (!normalized.startsWith("---\n")) {
+  if (lines[0] !== "---") {
     throw new Error(`${filename}: 缺少 YAML 元数据块，文件必须以 --- 开头`);
   }
 
-  const end = normalized.indexOf("\n---", 4);
+  const end = lines.indexOf("---", 1);
 
   if (end === -1) {
     throw new Error(`${filename}: 元数据块缺少结束的 ---`);
   }
 
-  const raw = normalized.slice(4, end).trim();
-  const data = {};
+  const raw = lines.slice(1, end).join("\n");
+  const document = YAML.parseDocument(raw, {
+    prettyErrors: true,
+    strict: true,
+    uniqueKeys: true
+  });
 
-  for (const line of raw.split("\n")) {
-    const trimmed = line.trim();
+  if (document.errors.length > 0) {
+    const message = String(document.errors[0].message || document.errors[0])
+      .split("\n")[0];
+    throw new Error(`${filename}: YAML 元数据语法错误：${message}`);
+  }
 
-    if (!trimmed || trimmed.startsWith("#")) {
-      continue;
+  let data;
+
+  try {
+    data = document.toJS({ maxAliasCount: 0 });
+  } catch (error) {
+    throw new Error(`${filename}: YAML 元数据解析失败：${error.message || error}`);
+  }
+
+  if (data === null) {
+    data = {};
+  }
+
+  if (typeof data !== "object" || Array.isArray(data)) {
+    throw new Error(`${filename}: YAML 元数据顶层必须是键值对象`);
+  }
+
+  for (const [field, value] of Object.entries(data)) {
+    if (typeof value !== "string") {
+      throw new Error(`${filename}: 元数据字段 ${field} 的值必须是字符串`);
     }
-
-    const match = trimmed.match(/^([A-Za-z0-9_]+):\s*(.*)$/);
-
-    if (!match) {
-      throw new Error(`${filename}: 元数据行格式错误：${line}`);
-    }
-
-    const key = match[1];
-    let value = match[2].trim();
-
-    value = value.replace(/^["']/, "").replace(/["']$/, "");
-
-    if (Object.prototype.hasOwnProperty.call(data, key)) {
-      throw new Error(`${filename}: 元数据字段重复：${key}`);
-    }
-
-    data[key] = value;
   }
 
   return data;
@@ -96,76 +107,129 @@ function allowedEditorsForFile(config, filename) {
   );
 }
 
-function validateMetadata(config, filename, data) {
+function collectMetadataErrors(config, filename, data) {
+  const errors = [];
+  const addError = message => errors.push(`${filename}: ${message}`);
+
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
+    return [`${filename}: 元数据必须是键值对象`];
+  }
+
   const allowedFields = new Set([
     ...config.requiredFields,
     ...config.dateFields,
     ...config.optionalFields
   ]);
 
-  for (const field of Object.keys(data)) {
+  for (const [field, value] of Object.entries(data)) {
     if (!allowedFields.has(field)) {
-      throw new Error(`${filename}: 不允许的元数据字段：${field}`);
+      addError(`不允许的元数据字段：${field}`);
+    }
+
+    if (value !== undefined && typeof value !== "string") {
+      addError(`元数据字段 ${field} 的值必须是字符串`);
     }
   }
 
   for (const field of config.requiredFields) {
-    if (!data[field] || String(data[field]).trim() === "") {
-      throw new Error(`${filename}: 缺少必填字段：${field}`);
+    if (typeof data[field] !== "string" || data[field].trim() === "") {
+      addError(`缺少必填字段：${field}`);
     }
   }
 
-  const presentDateFields = config.dateFields.filter(field => data[field]);
+  const presentDateFields = config.dateFields.filter(field =>
+    typeof data[field] === "string" && data[field].trim() !== ""
+  );
 
   if (presentDateFields.length !== 1) {
-    throw new Error(`${filename}: received_date 与 create_date 必须且只能填写其中一个`);
+    addError("received_date 与 create_date 必须且只能填写其中一个");
   }
 
   for (const field of presentDateFields) {
-    checkDate(data[field], filename, field);
+    try {
+      checkDate(data[field], filename, field);
+    } catch (error) {
+      errors.push(error.message);
+    }
   }
 
   const createDateRequired = (config.createDateRoots || [])
     .some(prefix => filename.startsWith(prefix));
 
   if (createDateRequired && !data.create_date) {
-    throw new Error(`${filename}: 该目录下的文件必须使用 create_date，而不是 received_date`);
+    addError("该目录下的文件必须使用 create_date，而不是 received_date");
   }
 
-  if (!config.allowedStatuses.includes(data.status)) {
-    throw new Error(
-      `${filename}: status 不合法：${data.status}；允许值：${config.allowedStatuses.join("、")}`
-    );
+  if (
+    presentDateFields.length === 1 &&
+    typeof data.status === "string" &&
+    data.status.trim() !== ""
+  ) {
+    const dateField = presentDateFields[0];
+    const allowedStatuses = config.statusByDateField?.[dateField];
+
+    if (!Array.isArray(allowedStatuses)) {
+      addError(`元数据配置缺少 ${dateField} 对应的 status 规则`);
+    } else if (!allowedStatuses.includes(data.status)) {
+      addError(
+        `status 与 ${dateField} 不匹配：${data.status}；允许值：${allowedStatuses.join("、")}`
+      );
+    }
   }
 
-  if (String(data.editor_username).startsWith("@")) {
-    throw new Error(`${filename}: editor_username 不要带 @，只写 GitHub 用户名`);
-  }
+  if (typeof data.editor_username === "string") {
+    if (data.editor_username.startsWith("@")) {
+      addError("editor_username 不要带 @，只写 GitHub 用户名");
+    }
 
-  if (/\s/.test(String(data.editor_username))) {
-    throw new Error(`${filename}: editor_username 不能包含空格`);
+    if (/\s/.test(data.editor_username)) {
+      addError("editor_username 不能包含空格");
+    }
   }
 
   const allowedEditors = allowedEditorsForFile(config, filename);
 
   if (allowedEditors.length === 0) {
-    throw new Error(`${filename}: 文件不在任何已登记的责编目录下`);
+    addError("文件不在任何已登记的责编目录下");
   }
 
-  const matched = allowedEditors.some(rule =>
-    data.editor === rule.name &&
-    normalizeLogin(data.editor_username) === normalizeLogin(rule.login)
-  );
-
-  if (!matched) {
-    const expected = allowedEditors
-      .map(rule => `${rule.name} / ${rule.login}`)
-      .join(" 或 ");
-
-    throw new Error(
-      `${filename}: editor/editor_username 与所在目录不一致；允许：${expected}；实际：${data.editor} / ${data.editor_username}`
+  if (
+    allowedEditors.length > 0 &&
+    typeof data.editor === "string" &&
+    data.editor.trim() !== "" &&
+    typeof data.editor_username === "string" &&
+    data.editor_username.trim() !== ""
+  ) {
+    const matched = allowedEditors.some(rule =>
+      data.editor === rule.name &&
+      normalizeLogin(data.editor_username) === normalizeLogin(rule.login)
     );
+
+    if (!matched) {
+      const expected = allowedEditors
+        .map(rule => `${rule.name} / ${rule.login}`)
+        .join(" 或 ");
+
+      addError(
+        `editor/editor_username 与所在目录不一致；允许：${expected}；实际：${data.editor} / ${data.editor_username}`
+      );
+    }
   }
+
+  return errors;
+}
+
+function validateMetadata(config, filename, data) {
+  const errors = collectMetadataErrors(config, filename, data);
+
+  if (errors.length === 0) {
+    return;
+  }
+
+  const error = new Error(errors.join("\n"));
+  error.name = "MetadataValidationError";
+  error.errors = errors;
+  throw error;
 }
 
 function listArticleFiles(config) {
@@ -188,6 +252,7 @@ module.exports = {
   loadConfig,
   normalizeLogin,
   parseFrontmatter,
+  collectMetadataErrors,
   validateMetadata,
   listArticleFiles,
   isArticleMarkdown,
