@@ -1,7 +1,7 @@
 ---
 title: "浙江省2026年初中学业水平模拟考试·数学卷（总览）"
-author: "2419沈泽厚"
-author_display: "沈泽厚"
+author: "2503 王政尧"
+author_display: "2503 王政尧"
 received_date: "2026-07-10"
 editor: "沈泽厚"
 editor_username: "Mr-Drinking"
