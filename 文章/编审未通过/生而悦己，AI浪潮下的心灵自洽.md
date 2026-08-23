@@ -3,6 +3,7 @@ title: "生而悦己，AI浪潮下的心灵自洽"
 author: "2611 张馨之"
 author_display: "2611 张馨之"
 received_date: "2026-08-13"
+status: "编审未通过"
 note: "" 
 ---
 
