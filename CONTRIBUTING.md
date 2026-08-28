@@ -100,9 +100,15 @@ CHECK_METADATA_FILES="文章/对应目录/稿件.md" npm run check:metadata
 - 如果你对其余 Markdown 写法有疑问
     - 可以参考 GitHub Docs 官方的 [*Basic Writing and Formatting Syntax*](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax)（《基本写作与格式语法》）。注意，请直接通过如 Chrome 的自动翻译等功能阅读英文版，而不要被「诱骗」到那个不堪入目的机翻简中版
     - 也可以参考更（最）进阶、权威的 *GitHub Flavored Markdown Spec*（《GitHub 风格的 Markdown 规范》），这是[第三方中文版](https://gfm.docschina.org/zh-hans/)，而这是[官方英文版](https://github.github.com/gfm/#insecure-characters)
-- 所有双层蝌蚪引号（“”）、傻瓜引号（""）应改为单层直角引号（「」），单层蝌蚪引号（‘’）应改为双层直角引号（『』）
-- 所有 MD 文件的末尾应空一行（一个换行符）
-- 关于汉字与西文字母、数字间的空格
-    - 不进入排版流程的文件，为保持美观，应加入一个空格
-    - 进入排版流程的文件则不用添加任何空格，InDesign 的排版引擎会自动添加
+- 其他格式要求
+    - 所有双层蝌蚪引号（“”）、傻瓜引号（""）应改为单层直角引号（「」），单层蝌蚪引号（‘’）应改为双层直角引号（『』）
+    - 关于换行符 `<br>`
+        - 在最终排印中所有段间均不空行的稿件中禁用
+        - 在最终排印中有段间空一行的稿件中
+            - 任何不空行的部分的行尾均应加入 `<br>`
+            - 任何段间空一行的部分行尾应使用正常换行符
+    - 所有 MD 文件的末尾应空一行（一个换行符）
+    - 关于汉字与西文字母、数字间的空格
+        - 不进入排版流程的文件，为保持美观，应加入一个空格
+        - 进入排版流程的文件则不用添加任何空格，InDesign 的排版引擎会自动添加
 - 对其他排版细则有疑问的可参考 W3C（万维网联盟，World Wide Web Consortium）的[中文排版需求](https://www.w3.org/TR/clreq/)
