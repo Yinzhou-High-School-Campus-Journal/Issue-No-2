@@ -37,7 +37,7 @@
    - 封面设计
    - 对人文社科稿件拥有最终决定权
    - 其他建议
-- [李洛霄](https://github.com/Liluoxiao)
+- [李洛霄](https://github.com/LiLuoxiao)
    - 对接校方
    - 统稿
       - 主题
