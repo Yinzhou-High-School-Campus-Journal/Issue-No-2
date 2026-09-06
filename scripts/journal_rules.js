@@ -234,12 +234,17 @@ function validateMetadata(config, filename, data) {
 
 function listArticleFiles(config) {
   return walk(config.articleRoot)
-    .filter(file => file.endsWith(".md"))
-    .map(toRepoPath);
+    .map(toRepoPath)
+    .filter(filename => isMetadataCheckTarget(config, filename));
 }
 
 function isArticleMarkdown(config, filename) {
   return filename.startsWith(config.articleRoot) && filename.endsWith(".md");
+}
+
+function isMetadataCheckTarget(config, filename) {
+  return isArticleMarkdown(config, filename) &&
+    !(config.metadataExcludedRoots || []).some(prefix => filename.startsWith(prefix));
 }
 
 function isTechnicalUser(config, login) {
@@ -256,5 +261,6 @@ module.exports = {
   validateMetadata,
   listArticleFiles,
   isArticleMarkdown,
+  isMetadataCheckTarget,
   isTechnicalUser
 };

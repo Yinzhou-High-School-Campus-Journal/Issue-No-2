@@ -8,6 +8,8 @@ const {
   parseFrontmatter,
   validateMetadata,
   isArticleMarkdown,
+  isMetadataCheckTarget,
+  listArticleFiles,
   isTechnicalUser
 } = require("./journal_rules");
 
@@ -48,6 +50,12 @@ assert.strictEqual(isTechnicalUser(config, "@HSRST2026"), true);
 assert.strictEqual(isArticleMarkdown(config, "文章/人文社科（张哲源）/测试.md"), true);
 assert.strictEqual(isArticleMarkdown(config, "README.md"), false);
 assert.strictEqual(isArticleMarkdown(config, "文章/编审未通过/测试.md"), true);
+assert.strictEqual(isMetadataCheckTarget(config, "文章/正文之外（张哲源、李洛霄）/前言.md"), true);
+assert.strictEqual(isMetadataCheckTarget(config, "文章/正文之外（张哲源、李洛霄）/非见刊类/沟通.md"), false);
+assert.strictEqual(isMetadataCheckTarget(config, "文章/正文之外（张哲源、李洛霄）/非见刊类/子目录/沟通.md"), false);
+assert.strictEqual(isMetadataCheckTarget(config, "文章/正文之外（张哲源、李洛霄）/非见刊类归档/稿件.md"), true);
+assert.strictEqual(isMetadataCheckTarget(config, "文章/其他/非见刊类/稿件.md"), true);
+assert.strictEqual(isMetadataCheckTarget(config, "README.md"), false);
 
 assert.deepStrictEqual(
   parseFrontmatter(
@@ -142,16 +150,28 @@ assertInvalid(
   /editor\/editor_username 与所在目录不一致/
 );
 assertValid(
-  "文章/正文之外（张哲源、李洛霄）/非见刊类/本期征稿说明.md",
+  "文章/正文之外（张哲源、李洛霄）/前言.md",
   metadata({
     author: "《鄞年・思叙》编辑部",
     author_display: "《鄞年・思叙》编辑部",
     create_date: "2026-05-30",
-    editor: "沈泽厚",
-    editor_username: "Mr-Drinking",
-    status: "已见刊",
+    editor: "王茗冉",
+    editor_username: "hsrst2026",
+    status: "未开始",
     received_date: undefined
   })
+);
+
+assertInvalid(
+  "文章/正文之外（张哲源、李洛霄）/前言.md",
+  metadata({
+    create_date: "2026-05-28",
+    editor: "沈泽厚",
+    editor_username: "Mr-Drinking",
+    status: "未开始",
+    received_date: undefined
+  }),
+  /editor\/editor_username 与所在目录不一致/
 );
 
 assertInvalid(
@@ -244,9 +264,12 @@ const repositoryRoot = path.resolve(__dirname, "..");
 const fixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), "journal-metadata-"));
 const validFixture = "文章/人文社科（张哲源）/有效稿件.md";
 const legacyFixture = "文章/正文之外（张哲源、李洛霄）/历史占位稿.md";
+const excludedFixture = "文章/正文之外（张哲源、李洛霄）/非见刊类/沟通.md";
 
 fs.mkdirSync(path.join(fixtureRoot, path.dirname(validFixture)), { recursive: true });
 fs.mkdirSync(path.join(fixtureRoot, path.dirname(legacyFixture)), { recursive: true });
+fs.mkdirSync(path.join(fixtureRoot, path.dirname(excludedFixture)), { recursive: true });
+fs.writeFileSync(path.join(fixtureRoot, excludedFixture), "无需元数据的非见刊内容\n");
 fs.writeFileSync(
   path.join(fixtureRoot, validFixture),
   [
@@ -280,6 +303,50 @@ fs.writeFileSync(
 fs.writeFileSync(path.join(fixtureRoot, "metadata.json"), JSON.stringify(config));
 
 try {
+  const originalCwd = process.cwd();
+  try {
+    process.chdir(fixtureRoot);
+    assert.deepStrictEqual(listArticleFiles(config).sort(), [validFixture, legacyFixture].sort());
+  } finally {
+    process.chdir(originalCwd);
+  }
+
+  for (const [eventName, selectedFiles, expectedStatus, expectedOutput] of [
+    ["workflow_dispatch", [excludedFixture], 0, /没有需要检查的稿件 Markdown 文件/],
+    ["workflow_dispatch", [validFixture, excludedFixture], 0, /共检查 1 个稿件文件/],
+    ["pull_request", [excludedFixture], 0, /没有需要检查的稿件 Markdown 文件/],
+    ["pull_request", [validFixture, excludedFixture], 0, /共检查 1 个稿件文件/],
+    ["pull_request", [legacyFixture], 1, /editor_username 不能包含空格/]
+  ]) {
+    const eventFile = path.join(fixtureRoot, "event.json");
+    const mockApiFile = path.join(fixtureRoot, "mock_api.cjs");
+    fs.writeFileSync(eventFile, JSON.stringify({ pull_request: { number: 1 } }));
+    fs.writeFileSync(mockApiFile,
+      `global.fetch = async () => ({ ok: true, text: async () => ${JSON.stringify(JSON.stringify(
+        selectedFiles.map(filename => ({ filename, status: "renamed" }))
+      ))} });\n`
+    );
+    const check = spawnSync(
+      process.execPath,
+      ["--require", mockApiFile, path.join(repositoryRoot, "scripts/check_metadata.js")],
+      {
+        cwd: fixtureRoot,
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          CHECK_METADATA_FILES: eventName === "workflow_dispatch" ? selectedFiles.join(",") : "",
+          METADATA_CONFIG_PATH: path.join(fixtureRoot, "metadata.json"),
+          GITHUB_EVENT_NAME: eventName,
+          GITHUB_EVENT_PATH: eventName === "pull_request" ? eventFile : "",
+          GITHUB_REPOSITORY: "fixture/journal",
+          GITHUB_TOKEN: "local-mock-only"
+        }
+      }
+    );
+    assert.strictEqual(check.status, expectedStatus, check.stdout + check.stderr);
+    assert.match(check.stdout, expectedOutput);
+  }
+
   const incrementalCheck = spawnSync(
     process.execPath,
     [path.join(repositoryRoot, "scripts/check_metadata.js")],

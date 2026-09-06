@@ -4,7 +4,7 @@ const {
   normalizeLogin,
   parseFrontmatter,
   validateMetadata,
-  isArticleMarkdown,
+  isMetadataCheckTarget,
   isTechnicalUser
 } = require("./journal_rules");
 
@@ -181,8 +181,8 @@ async function verifyChangedFiles() {
   for (const file of files) {
     const filename = file.filename;
 
-    if (!isArticleMarkdown(config, filename)) {
-      console.log(`Skip: non-article file changed: ${filename}.`);
+    if (!isMetadataCheckTarget(config, filename)) {
+      console.log(`Skip: file outside metadata check scope: ${filename}.`);
       return false;
     }
 

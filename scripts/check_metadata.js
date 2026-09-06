@@ -3,7 +3,8 @@ const {
   loadConfig,
   parseFrontmatter,
   validateMetadata,
-  isArticleMarkdown
+  isArticleMarkdown,
+  isMetadataCheckTarget
 } = require("./journal_rules");
 
 async function api(path, token) {
@@ -102,13 +103,13 @@ async function main() {
       changedFiles
         .filter(file => file.status !== "removed")
         .map(file => file.filename)
-        .filter(filename => isArticleMarkdown(config, filename))
+        .filter(filename => isMetadataCheckTarget(config, filename))
     )
   ];
   const errors = [];
 
   if (files.length === 0) {
-    console.log("元数据检查通过。此 PR 没有需要检查的稿件 Markdown 文件。");
+    console.log("元数据检查通过。所选范围内没有需要检查的稿件 Markdown 文件。");
     return;
   }
 

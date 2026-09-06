@@ -1,5 +1,8 @@
 {
   "articleRoot": "文章/",
+  "metadataExcludedRoots": [
+    "文章/正文之外（张哲源、李洛霄）/非见刊类/"
+  ],
   "requiredFields": [
     "title",
     "author",
@@ -69,13 +72,6 @@
       ]
     },
     {
-      "name": "沈泽厚",
-      "login": "Mr-Drinking",
-      "paths": [
-        "文章/正文之外（张哲源、李洛霄）/非见刊类/"
-      ]
-    },
-    {
       "name": "叶静轩",
       "login": "Mr-Eating",
       "paths": [
@@ -86,6 +82,7 @@
       "name": "王茗冉",
       "login": "hsrst2026",
       "paths": [
+        "文章/正文之外（张哲源、李洛霄）/",
         "文章/其他/",
         "文章/编审未通过/"
       ]
