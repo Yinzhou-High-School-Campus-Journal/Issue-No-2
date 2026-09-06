@@ -47,6 +47,7 @@ assert.strictEqual(isTechnicalUser(config, "mr-drinking"), true);
 assert.strictEqual(isTechnicalUser(config, "@HSRST2026"), true);
 assert.strictEqual(isArticleMarkdown(config, "文章/人文社科（张哲源）/测试.md"), true);
 assert.strictEqual(isArticleMarkdown(config, "README.md"), false);
+assert.strictEqual(isArticleMarkdown(config, "文章/编审未通过/测试.md"), true);
 
 assert.deepStrictEqual(
   parseFrontmatter(
@@ -99,9 +100,46 @@ assertValid("文章/人文社科（张哲源）/测试.md", metadata());
 assertValid(
   "文章/其他/测试.md",
   metadata({
-    editor: "叶静轩",
-    editor_username: "Mr-Eating"
+    editor: "王茗冉",
+    editor_username: "hsrst2026"
   })
+);
+assertValid(
+  "文章/其他/试卷/参考答案.md",
+  metadata({
+    editor: "王茗冉",
+    editor_username: "HSRST2026"
+  })
+);
+assertValid(
+  "文章/编审未通过/测试.md",
+  metadata({
+    editor: "王茗冉",
+    editor_username: "hsrst2026",
+    status: "编审未通过"
+  })
+);
+for (const [editor, editor_username] of [
+  ["张哲源", "SaviorZhang211"],
+  ["李洛霄", "LiLuoxiao"],
+  ["沈泽厚", "Mr-Drinking"],
+  ["叶静轩", "Mr-Eating"]
+]) {
+  for (const filename of ["文章/其他/测试.md", "文章/编审未通过/测试.md"]) {
+    assertInvalid(
+      filename,
+      metadata({ editor, editor_username }),
+      /editor\/editor_username 与所在目录不一致/
+    );
+  }
+}
+assertInvalid(
+  "文章/人文社科（张哲源）/测试.md",
+  metadata({
+    editor: "王茗冉",
+    editor_username: "hsrst2026"
+  }),
+  /editor\/editor_username 与所在目录不一致/
 );
 assertValid(
   "文章/正文之外（张哲源、李洛霄）/非见刊类/本期征稿说明.md",
