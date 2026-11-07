@@ -5,7 +5,7 @@ author_display: "2503 王政尧"
 received_date: "2026-07-10"
 editor: "王茗冉"
 editor_username: "hsrst2026"
-status: "已定稿"
+status: "编辑中"
 note: "试卷、参考答案与转换说明"
 ---
 
